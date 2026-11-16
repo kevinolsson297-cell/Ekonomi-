@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ekonomi</title>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ekonomi"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{--bg:#fff;--fg:#111;--mut:#8a8a8a;--line:#ececec;--pill:#f3f3f4;--red:#d64535;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#000;--fg:#f5f5f5;--mut:#8e8e93;--line:#242426;--pill:#1c1c1e;--red:#ff6b5e;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body{padding:env(safe-area-inset-top) 0 calc(76px + env(safe-area-inset-bottom))}
+.screen{max-width:480px;margin:0 auto;padding:22px 20px;animation:in .25s ease}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+[hidden]{display:none!important}
+.num{font-variant-numeric:tabular-nums}
+.total{font-size:56px;font-weight:700;text-align:center;letter-spacing:-2px;margin-top:6px;font-variant-numeric:tabular-nums}
+.sub{text-align:center;color:var(--mut);font-size:14px;margin:2px 0 18px}
+.prog{height:4px;border-radius:2px;background:var(--pill);margin:-6px 30px 18px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--fg);border-radius:2px;transition:width .4s}
+.add{display:flex;gap:10px;margin-bottom:8px}
+.add input{flex:1;min-width:0;font-size:30px;text-align:center;padding:14px;border:0;border-radius:18px;background:var(--pill);color:var(--fg);outline:0}
+.add button{width:66px;border:0;border-radius:18px;background:var(--fg);color:var(--bg);font-size:32px;transition:transform .1s}
+.add button:active{transform:scale(.94)}
+.hint{text-align:center;color:var(--mut);font-size:12px;margin-bottom:14px;opacity:.8}
+.day{display:flex;justify-content:space-between;color:var(--mut);font-size:12px;padding:16px 2px 6px;text-transform:uppercase;letter-spacing:.5px}
+.row{display:flex;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.row .l{flex:1;min-width:0}.row .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.row small{color:var(--mut);font-size:12px}
+.a{font-size:19px;font-variant-numeric:tabular-nums}
+.x{border:0;background:none;color:var(--mut);font-size:22px;padding:4px 8px}
+.bar{height:5px;border-radius:3px;background:var(--fg);margin-top:7px;transition:width .35s}
+select{width:100%;font-size:17px;font-weight:600;text-align:center;text-align-last:center;padding:14px;border:0;border-radius:16px;background:var(--pill);color:var(--fg);margin-bottom:10px;appearance:none;-webkit-appearance:none}
+.in{display:flex;gap:8px;margin:2px 0 8px}
+.in input{min-width:0;padding:10px;border:0;border-radius:12px;background:var(--pill);color:var(--fg);font-size:14px;outline:0}
+.in input:first-child{width:92px}.in input:last-child{flex:1}
+.hd{color:var(--mut);font-size:12px;padding:14px 2px 6px;border-bottom:1px solid var(--fg);text-transform:uppercase;letter-spacing:.5px}
+.links{display:flex;justify-content:center;gap:22px;margin-top:30px}
+.link{border:0;background:none;color:var(--mut);font-size:13px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;color:var(--mut);font-size:15px;padding:16px 0;font-weight:600}
+nav button.on{color:var(--fg)}
+#toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--fg);color:var(--bg);padding:11px 16px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap}
+#toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#toast button{border:0;background:none;color:inherit;font-weight:700;margin-left:10px;text-decoration:underline;font-size:14px}
+</style></head><body>
+<main id="s1" class="screen">
+ <div class="total" id="t1">0 kr</div><div class="sub" id="u1"></div>
+ <div class="prog" id="pg" hidden><i id="pi"></i></div>
+ <div class="add"><input id="amt" type="text" inputmode="decimal" placeholder="belopp" autocomplete="off"><button id="go" aria-label="Lägg till">+</button></div>
+ <div class="hint">Skriv belopp och tryck + eller Enter – fältet töms direkt så du kan skriva nästa</div>
+ <div id="list"></div>
+ <div class="links"><button class="link" id="bk">Kopiera backup</button><button class="link" id="rs">Återställ backup</button></div>
+</main>
+<main id="s2" class="screen" hidden>
+ <div class="total" id="t2">0 kr</div><div class="sub" id="u2"></div>
+ <select id="vw"><option>Översikt</option><option>Dag för dag</option><option>Veckodagar</option><option>Veckor</option><option>Tid på dygnet</option><option>Månader &amp; anteckningar</option></select>
+ <select id="pr"></select>
+ <div id="tb"></div>
+</main>
+<div id="toast"></div>
+<nav><button id="n1" class="on">Summa</button><button id="n2">Meny</button></nav>
+<script>
+const K='ekonomi.v1';let D;try{D=JSON.parse(localStorage.getItem(K))}catch(e){}D=D&&D.e?D:{e:[],b:{},n:{}};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){}};
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+const $=i=>document.getElementById(i);
+const kr=x=>Math.round(x).toLocaleString('sv-SE')+' kr';
+const MON=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+const WD=['måndag','tisdag','onsdag','torsdag','fredag','lördag','söndag'],WS=['mån','tis','ons','tors','fre','lör','sön'];
+const rng=o=>{const n=new Date(),s=new Date(n.getFullYear(),n.getMonth()-o,1);return[s,new Date(s.getFullYear(),s.getMonth()+1,1)]};
+const inR=(x,s,e)=>x.t>=+s&&x.t<+e;
+const sum=a=>a.reduce((p,x)=>p+x.a,0);
+const hm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const dk=t=>{const d=new Date(t);return d.getFullYear()*400+d.getMonth()*32+d.getDate()};
+const dl=t=>{const n=Date.now(),k=dk(t);return k==dk(n)?'idag':k==dk(n-864e5)?'igår':WS[(new Date(t).getDay()+6)%7]+' '+new Date(t).getDate()+' '+MON[new Date(t).getMonth()].slice(0,3)};
+let tm;const hideT=()=>$('toast').classList.remove('show');
+function toast(m,fn){clearTimeout(tm);$('toast').innerHTML=m+(fn?'<button id="ud">Ångra</button>':'');$('toast').classList.add('show');if(fn)$('ud').onclick=()=>{fn();hideT()};tm=setTimeout(hideT,5000)}
+function home(){
+ const[s,e]=rng(0),m=D.e.filter(x=>inR(x,s,e)),td=D.e.filter(x=>dk(x.t)==dk(Date.now())),tot=sum(m),bud=D.b[s.getMonth()];
+ $('t1').textContent=kr(tot);$('u1').textContent='idag '+Math.round(sum(td))+' kr  ·  '+m.length+' köp i '+MON[s.getMonth()]+(bud?'  ·  '+(bud-tot>=0?kr(bud-tot)+' kvar':kr(tot-bud)+' över'):'');
+ $('pg').hidden=!bud;if(bud){$('pi').style.width=Math.min(100,tot/bud*100)+'%';$('pi').style.background=tot>bud?'var(--red)':'var(--fg)'}
+ const L=D.e.slice(-40).reverse(),ds={};D.e.forEach(x=>{const k=dk(x.t);if(k>=dk(L.length?L[L.length-1].t:0))ds[k]=(ds[k]||0)+x.a});
+ let last,h='';L.forEach(x=>{const k=dk(x.t);if(k!=last){h+=`<div class="day"><span>${dl(x.t)}</span><span>${kr(ds[k])}</span></div>`;last=k}
+  h+=`<div class="row"><div class="l"><span class="a" data-ed="${x.id}">${x.a.toLocaleString('sv-SE')} kr</span> <small>${hm(x.t)}</small></div><button class="x" data-id="${x.id}" aria-label="Ta bort">×</button></div>`});
+ $('list').innerHTML=h||'<div class="sub">Inga köp ännu</div>'}
+const parse=s=>s.replace(/,/g,'.').trim().split(/\s+/).map(t=>t.split('+').reduce((p,x)=>p+(parseFloat(x)||0),0)).filter(a=>a>0);
+function add(){const v=parse($('amt').value);if(!v.length)return;const t=Date.now(),ids=v.map((a,i)=>{const id=t+i;D.e.push({id,t,a});return id});
+ save();$('amt').value='';home();$('amt').focus();toast('Tillagt '+kr(v.reduce((p,a)=>p+a,0)),()=>{D.e=D.e.filter(x=>!ids.includes(x.id));save();home()})}
+$('go').onclick=add;$('amt').onkeydown=e=>{if(e.key==='Enter')add()};
+$('list').onclick=e=>{const t=e.target,id=+(t.dataset.id||t.dataset.ed);if(!id)return;const x=D.e.find(y=>y.id==id);if(!x)return;
+ if(t.dataset.id){D.e=D.e.filter(y=>y.id!=id);save();home();toast('Borttaget',()=>{D.e.push(x);D.e.sort((a,b)=>a.t-b.t);save();home()})}
+ else{const n=parseFloat((prompt('Nytt belopp',x.a)||'').replace(',','.'));if(n>0){x.a=n;save();home()}}};
+$('bk').onclick=()=>{const c=JSON.stringify(D);(navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast('Backup kopierad – klistra in i Anteckningar'),()=>prompt('Kopiera:',c))};
+$('rs').onclick=()=>{const c=prompt('Klistra in backup');if(!c)return;try{const d=JSON.parse(c);if(!Array.isArray(d.e))throw 0;D={e:d.e,b:d.b||{},n:d.n||{}};save();home();toast('Backup återställd')}catch(x){alert('Ogiltig backup')}};
+$('pr').innerHTML=['Denna månad','Förra månaden'].concat([...Array(10)].map((_,i)=>(i+2)+' månader sedan')).map((t,i)=>`<option value="${i}">${t}</option>`).join('');
+const wdi=(s,i)=>(new Date(s.getFullYear(),s.getMonth(),i+1).getDay()+6)%7;
+function menu(){
+ const v=$('vw').selectedIndex,o=+$('pr').value,[s,e]=rng(o),days=Math.round((e-s)/864e5),now=new Date();
+ const el=(now>=s&&now<e)?now.getDate():days,es=D.e.filter(x=>inR(x,s,e)),tot=sum(es);
+ $('t2').textContent=kr(tot);$('u2').textContent=MON[s.getMonth()]+' '+s.getFullYear()+'  ·  '+es.length+' köp';
+ const dd=Array(days).fill(0);es.forEach(x=>{dd[new Date(x.t).getDate()-1]+=x.a});
+ const hd=['Nyckeltal','Dag','Veckodag','Period','Tid på dygnet','Månad'][v],bud=D.b[s.getMonth()];let R=[];
+ if(v==0){const mx=Math.max(...dd),mi=dd.indexOf(mx),[ps,pe]=rng(o+1),pt=sum(D.e.filter(x=>inR(x,ps,pe))),pr=tot/el*days;
+  R=[['Utgifter hittills',kr(tot)],['Prognos månadsslut',kr(pr)],['Snitt per dag',kr(tot/el)],['Snitt per köp',kr(es.length?tot/es.length:0)],['Antal köp',es.length+' st'],['Dyraste dag',mx?kr(mx)+' · '+(mi+1)+' '+MON[s.getMonth()].slice(0,3):'–'],['Förra månaden',pt?kr(pt):'–'],['Takt mot förra',pt?(pr>=pt?'+':'−')+Math.abs(Math.round((pr/pt-1)*100))+' %':'–'],['Budget',bud?kr(bud):'sätt under Månader'],['Kvar av budget',bud?kr(bud-tot):'–']]}
+ if(v==1)R=dd.map((a,i)=>[WS[wdi(s,i)]+' '+(i+1),a]);
+ if(v==2)R=WD.map((n,w)=>[n,dd.reduce((p,a,i)=>p+(wdi(s,i)==w?a:0),0)]);
+ if(v==3)R=[[1,7],[8,14],[15,21],[22,28],[29,days]].filter(w=>w[0]<=days).map(w=>['dag '+w[0]+'–'+(w[0]>28?'slut':w[1]),dd.slice(w[0]-1,w[1]).reduce((p,a)=>p+a,0)]);
+ if(v==4)R=[['natt  00–06',0,6],['morgon  06–11',6,11],['lunch  11–14',11,14],['eftermiddag  14–18',14,18],['kväll  18–24',18,24]].map(b=>[b[0],sum(es.filter(x=>{const h=new Date(x.t).getHours();return h>=b[1]&&h<b[2]}))]);
+ if(v==5){const y=s.getFullYear();R=MON.map((n,i)=>[n,sum(D.e.filter(x=>inR(x,new Date(y,i,1),new Date(y,i+1,1)))),i])}
+ const mx=Math.max(1,...R.map(r=>typeof r[1]=='number'?r[1]:0));
+ let h=`<div class="hd">${hd}</div>`+R.map(r=>{const n=typeof r[1]=='number';
+  return `<div class="row"><div class="l">${r[0]}${v>0&&n&&r[1]>0?`<div class="bar" style="width:${Math.max(2,r[1]/mx*100)}%"></div>`:''}</div><div class="v">${n?(r[1]?kr(r[1]):'–'):r[1]}</div></div>`+
+  (v==5?`<div class="in"><input type="number" inputmode="decimal" placeholder="budget" value="${D.b[r[2]]||''}" data-b="${r[2]}"><input type="text" placeholder="anteckning" value="${(D.n[r[2]]||'').replace(/"/g,'&quot;')}" data-n="${r[2]}"></div>`:'')}).join('');
+ if(v==5)h+=`<div class="row"><div class="l"><b>totalt år</b></div><div class="v">${kr(R.reduce((p,r)=>p+r[1],0))}</div></div>`;
+ $('tb').innerHTML=h}
+$('tb').onchange=e=>{const t=e.target;if(t.dataset.b!==undefined)D.b[t.dataset.b]=parseFloat(t.value)||0;if(t.dataset.n!==undefined)D.n[t.dataset.n]=t.value;save()};
+$('vw').onchange=$('pr').onchange=menu;
+function tab(n){$('s1').hidden=n!=1;$('s2').hidden=n!=2;$('n1').className=n==1?'on':'';$('n2').className=n==2?'on':'';n==2?menu():home()}
+$('n1').onclick=()=>tab(1);$('n2').onclick=()=>tab(2);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('s1').hidden)home()});
+home();if('serviceWorker'in navigator&&location.protocol=='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
